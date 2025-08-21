@@ -15,6 +15,7 @@
       gap: 20px;
       padding: 20px;
       transition: background 0.3s, color 0.3s;
+      overflow: hidden;
     }
 
     body.light {
@@ -26,8 +27,8 @@
       background: #1f1f1f;
       border-radius: 12px;
       padding: 20px;
-      width: 200px;
-      height: 120px;
+      width: 220px;
+      height: 140px;
       cursor: grab;
       position: relative;
       transition: transform 0.3s, background 0.3s;
@@ -64,13 +65,17 @@
       position: fixed;
       top: 50%;
       left: 50%;
-      width: 80%;
+      width: 60%;
       height: 60%;
       transform: translate(-50%, -50%) scale(1);
       z-index: 1000;
-      transition: all 0.4s ease;
     }
 
+    .hidden {
+      display: none;
+    }
+
+    /* Settings button */
     .settings-btn {
       position: fixed;
       top: 20px;
@@ -88,52 +93,193 @@
       background: #ddd;
       color: black;
     }
+
+    /* Settings panel */
+    .settings-panel {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      background: #1f1f1f;
+      color: white;
+      border-radius: 12px;
+      padding: 20px;
+      width: 220px;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 1200;
+    }
+
+    body.light .settings-panel {
+      background: #fff;
+      color: black;
+    }
+
+    .settings-panel label {
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    select, input[type="checkbox"] {
+      margin-left: 10px;
+    }
   </style>
 </head>
 <body>
   <!-- Settings Button -->
-  <button class="settings-btn" onclick="toggleTheme()">⚙️ Settings</button>
+  <button class="settings-btn" onclick="toggleSettings()">⚙ Settings</button>
+
+  <!-- Settings Panel -->
+  <div class="settings-panel" id="settingsPanel">
+    <label>
+      Dark Mode
+      <input type="checkbox" id="darkModeToggle">
+    </label>
+    <label>
+      Time Format
+      <select id="timeFormat">
+        <option value="24">24h</option>
+        <option value="12">12h</option>
+      </select>
+    </label>
+    <label>
+      Clock Style
+      <select id="clockStyle">
+        <option value="digital">Digital</option>
+        <option value="analog">Analog</option>
+      </select>
+    </label>
+  </div>
 
   <!-- Clock Widget -->
   <div class="widget" id="clockWidget">
-    <h2>🕒 Clock</h2>
-    <p id="clock"></p>
+    <h2>Clock</h2>
+    <div id="clockDisplay"></div>
+    <canvas id="analogClock" width="180" height="100" style="display:none;"></canvas>
     <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
   </div>
 
-  <!-- Weather Widget (placeholder for now) -->
+  <!-- Weather Widget placeholder -->
   <div class="widget" id="weatherWidget">
-    <h2>🌤️ Weather</h2>
+    <h2>Weather</h2>
     <p>Coming soon...</p>
     <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
   </div>
 
   <script>
+    let timeFormat = "24"; // default
+    let clockStyle = "digital"; // default
+
+    // Settings toggle
+    function toggleSettings() {
+      const panel = document.getElementById("settingsPanel");
+      panel.style.display = (panel.style.display === "flex") ? "none" : "flex";
+    }
+
+    // Apply settings
+    document.getElementById("darkModeToggle").addEventListener("change", (e) => {
+      document.body.classList.toggle("light", !e.target.checked);
+    });
+
+    document.getElementById("timeFormat").addEventListener("change", (e) => {
+      timeFormat = e.target.value;
+    });
+
+    document.getElementById("clockStyle").addEventListener("change", (e) => {
+      clockStyle = e.target.value;
+    });
+
     // Clock
     function updateClock() {
       const now = new Date();
-      document.getElementById("clock").textContent = now.toLocaleTimeString();
+      const digital = document.getElementById("clockDisplay");
+      const analog = document.getElementById("analogClock");
+
+      if (clockStyle === "digital") {
+        analog.style.display = "none";
+        digital.style.display = "block";
+
+        let hours = now.getHours();
+        let minutes = now.getMinutes().toString().padStart(2, "0");
+        let seconds = now.getSeconds().toString().padStart(2, "0");
+
+        if (timeFormat === "12") {
+          const ampm = hours >= 12 ? "PM" : "AM";
+          hours = hours % 12 || 12;
+          digital.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+        } else {
+          digital.textContent = `${hours.toString().padStart(2, "0")}:${minutes}:${seconds}`;
+        }
+      } else {
+        digital.style.display = "none";
+        analog.style.display = "block";
+
+        const ctx = analog.getContext("2d");
+        ctx.clearRect(0, 0, analog.width, analog.height);
+
+        const radius = 40;
+        const cx = analog.width / 2;
+        const cy = analog.height / 2;
+
+        // Clock face
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        // Hands
+        let hour = now.getHours() % 12;
+        let minute = now.getMinutes();
+        let second = now.getSeconds();
+
+        // Hour hand
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + radius * 0.5 * Math.cos((hour * 30 + minute / 2 - 90) * Math.PI/180),
+                   cy + radius * 0.5 * Math.sin((hour * 30 + minute / 2 - 90) * Math.PI/180));
+        ctx.stroke();
+
+        // Minute hand
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + radius * 0.8 * Math.cos((minute * 6 - 90) * Math.PI/180),
+                   cy + radius * 0.8 * Math.sin((minute * 6 - 90) * Math.PI/180));
+        ctx.stroke();
+
+        // Second hand
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.strokeStyle = "red";
+        ctx.lineTo(cx + radius * 0.9 * Math.cos((second * 6 - 90) * Math.PI/180),
+                   cy + radius * 0.9 * Math.sin((second * 6 - 90) * Math.PI/180));
+        ctx.stroke();
+        ctx.strokeStyle = "black";
+      }
     }
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Dark / Light Theme Toggle
-    function toggleTheme() {
-      document.body.classList.toggle("light");
-    }
-
-    // Fullscreen Widget Toggle
+    // Fullscreen mode
     function toggleFullscreen(btn) {
       const widget = btn.parentElement;
-      widget.classList.toggle("fullscreen");
+      const widgets = document.querySelectorAll(".widget");
+
+      if (!widget.classList.contains("fullscreen")) {
+        widgets.forEach(w => { if (w !== widget) w.classList.add("hidden"); });
+        widget.classList.add("fullscreen");
+      } else {
+        widgets.forEach(w => w.classList.remove("hidden"));
+        widget.classList.remove("fullscreen");
+      }
     }
 
-    // Drag and Drop Widgets
+    // Dragging
     const widgets = document.querySelectorAll(".widget");
     let dragItem = null, offsetX, offsetY;
 
     widgets.forEach(widget => {
       widget.addEventListener("mousedown", (e) => {
+        if (widget.classList.contains("fullscreen")) return;
         dragItem = widget;
         offsetX = e.clientX - widget.offsetLeft;
         offsetY = e.clientY - widget.offsetTop;
