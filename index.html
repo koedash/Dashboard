@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: white;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding: 20px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body.light {
+      background: #f5f5f5;
+      color: black;
+    }
+
+    .widget {
+      background: #1f1f1f;
+      border-radius: 12px;
+      padding: 20px;
+      width: 200px;
+      height: 120px;
+      cursor: grab;
+      position: relative;
+      transition: transform 0.3s, background 0.3s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    body.light .widget {
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .widget:active {
+      cursor: grabbing;
+    }
+
+    .fullscreen-btn {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: #333;
+      border: none;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .fullscreen-btn:hover {
+      background: #555;
+    }
+
+    .widget.fullscreen {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 80%;
+      height: 60%;
+      transform: translate(-50%, -50%) scale(1);
+      z-index: 1000;
+      transition: all 0.4s ease;
+    }
+
+    .settings-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1f1f1f;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 1100;
+    }
+
+    body.light .settings-btn {
+      background: #ddd;
+      color: black;
+    }
+  </style>
+</head>
+<body>
+  <!-- Settings Button -->
+  <button class="settings-btn" onclick="toggleTheme()">⚙️ Settings</button>
+
+  <!-- Clock Widget -->
+  <div class="widget" id="clockWidget">
+    <h2>🕒 Clock</h2>
+    <p id="clock"></p>
+    <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
+  </div>
+
+  <!-- Weather Widget (placeholder for now) -->
+  <div class="widget" id="weatherWidget">
+    <h2>🌤️ Weather</h2>
+    <p>Coming soon...</p>
+    <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
+  </div>
+
+  <script>
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("clock").textContent = now.toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Dark / Light Theme Toggle
+    function toggleTheme() {
+      document.body.classList.toggle("light");
+    }
+
+    // Fullscreen Widget Toggle
+    function toggleFullscreen(btn) {
+      const widget = btn.parentElement;
+      widget.classList.toggle("fullscreen");
+    }
+
+    // Drag and Drop Widgets
+    const widgets = document.querySelectorAll(".widget");
+    let dragItem = null, offsetX, offsetY;
+
+    widgets.forEach(widget => {
+      widget.addEventListener("mousedown", (e) => {
+        dragItem = widget;
+        offsetX = e.clientX - widget.offsetLeft;
+        offsetY = e.clientY - widget.offsetTop;
+        widget.style.position = "absolute";
+        widget.style.zIndex = 1000;
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (dragItem && !dragItem.classList.contains("fullscreen")) {
+          dragItem.style.left = (e.clientX - offsetX) + "px";
+          dragItem.style.top = (e.clientY - offsetY) + "px";
+        }
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (dragItem) dragItem = null;
+      });
+    });
+  </script>
+</body>
+</html>
