@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard</title>
+  <title>Fancy Dashboard</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       background: #121212;
       color: white;
       margin: 0;
@@ -19,20 +19,22 @@
     }
 
     body.light {
-      background: #f5f5f5;
+      background: #f0f0f0;
       color: black;
     }
 
     .widget {
-      background: #1f1f1f;
-      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
       padding: 20px;
       width: 250px;
-      height: 180px;
+      height: 200px;
       cursor: grab;
       position: relative;
-      transition: transform 0.3s, background 0.3s;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: transform 0.3s, box-shadow 0.3s;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -40,9 +42,15 @@
       text-align: center;
     }
 
+    .widget:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    }
+
     body.light .widget {
-      background: #fff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: rgba(255,255,255,0.3);
+      border: 1px solid rgba(0,0,0,0.1);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
     }
 
     .widget h2 {
@@ -74,10 +82,11 @@
       position: fixed;
       top: 50%;
       left: 50%;
-      width: 60%;
-      height: 60%;
-      transform: translate(-50%, -50%) scale(1);
+      width: 80%;
+      height: 70%;
+      transform: translate(-50%, -50%);
       z-index: 1000;
+      background: inherit;
     }
 
     .hidden {
@@ -155,18 +164,31 @@
     ul {
       list-style: none;
       padding: 0;
+      width: 100%;
+      text-align: left;
+      max-height: 100px;
+      overflow-y: auto;
     }
 
     ul li {
-      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+
+    #clockDisplay, #analogClock {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
 <body>
-  <!-- Settings Button -->
   <button class="settings-btn" onclick="toggleSettings()">⚙ Settings</button>
-
-  <!-- Settings Panel -->
   <div class="settings-panel" id="settingsPanel">
     <label>
       Dark Mode
@@ -192,7 +214,7 @@
   <div class="widget" id="clockWidget">
     <h2>Clock</h2>
     <div id="clockDisplay"></div>
-    <canvas id="analogClock" width="180" height="100" style="display:none;"></canvas>
+    <canvas id="analogClock" width="180" height="180" style="display:none;"></canvas>
     <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
   </div>
 
@@ -219,17 +241,20 @@
   </div>
 
   <script>
-    let timeFormat = "24"; // default
-    let clockStyle = "digital"; // default
+    let timeFormat = "24";
+    let clockStyle = "digital";
 
-    // Settings toggle
+    // Dark mode on load
+    const darkModeToggle = document.getElementById("darkModeToggle");
+    document.body.classList.toggle("light", !darkModeToggle.checked);
+
+    // Settings
     function toggleSettings() {
       const panel = document.getElementById("settingsPanel");
-      panel.style.display = (panel.style.display === "flex") ? "none" : "flex";
+      panel.style.display = panel.style.display === "flex" ? "none" : "flex";
     }
 
-    // Apply settings
-    document.getElementById("darkModeToggle").addEventListener("change", (e) => {
+    darkModeToggle.addEventListener("change", (e) => {
       document.body.classList.toggle("light", !e.target.checked);
     });
 
@@ -247,164 +272,156 @@
       const digital = document.getElementById("clockDisplay");
       const analog = document.getElementById("analogClock");
 
-      if (clockStyle === "digital") {
+      if(clockStyle === "digital") {
         analog.style.display = "none";
-        digital.style.display = "block";
-
-        let hours = now.getHours();
-        let minutes = now.getMinutes().toString().padStart(2, "0");
-        let seconds = now.getSeconds().toString().padStart(2, "0");
-
-        if (timeFormat === "12") {
-          const ampm = hours >= 12 ? "PM" : "AM";
-          hours = hours % 12 || 12;
-          digital.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+        digital.style.display = "flex";
+        let h = now.getHours();
+        let m = now.getMinutes().toString().padStart(2,"0");
+        let s = now.getSeconds().toString().padStart(2,"0");
+        if(timeFormat==="12") {
+          const ampm = h>=12?"PM":"AM";
+          h = h%12||12;
+          digital.textContent = `${h}:${m}:${s} ${ampm}`;
         } else {
-          digital.textContent = `${hours.toString().padStart(2, "0")}:${minutes}:${seconds}`;
+          digital.textContent = `${h.toString().padStart(2,"0")}:${m}:${s}`;
         }
       } else {
-        digital.style.display = "none";
-        analog.style.display = "block";
-
+        digital.style.display="none";
+        analog.style.display="block";
         const ctx = analog.getContext("2d");
-        ctx.clearRect(0, 0, analog.width, analog.height);
+        ctx.clearRect(0,0,analog.width,analog.height);
 
-        const radius = 40;
-        const cx = analog.width / 2;
-        const cy = analog.height / 2 + 20;
+        const radius = 80;
+        const cx = analog.width/2;
+        const cy = analog.height/2;
 
-        // Clock face
+        // Face
         ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+        ctx.arc(cx,cy,radius,0,2*Math.PI);
+        ctx.strokeStyle = darkModeToggle.checked ? "white":"black";
+        ctx.lineWidth=3;
         ctx.stroke();
 
-        // Hands
-        let hour = now.getHours() % 12;
-        let minute = now.getMinutes();
-        let second = now.getSeconds();
+        let h = now.getHours()%12;
+        let m = now.getMinutes();
+        let s = now.getSeconds();
 
-        // Hour hand
+        // Hour
         ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + radius * 0.5 * Math.cos((hour * 30 + minute / 2 - 90) * Math.PI/180),
-                   cy + radius * 0.5 * Math.sin((hour * 30 + minute / 2 - 90) * Math.PI/180));
+        ctx.moveTo(cx,cy);
+        ctx.lineTo(cx + radius*0.5*Math.cos((h*30+m/2-90)*Math.PI/180),
+                   cy + radius*0.5*Math.sin((h*30+m/2-90)*Math.PI/180));
+        ctx.strokeStyle = darkModeToggle.checked ? "white":"black";
+        ctx.lineWidth=4;
         ctx.stroke();
 
-        // Minute hand
+        // Minute
         ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + radius * 0.8 * Math.cos((minute * 6 - 90) * Math.PI/180),
-                   cy + radius * 0.8 * Math.sin((minute * 6 - 90) * Math.PI/180));
+        ctx.moveTo(cx,cy);
+        ctx.lineTo(cx + radius*0.8*Math.cos((m*6-90)*Math.PI/180),
+                   cy + radius*0.8*Math.sin((m*6-90)*Math.PI/180));
+        ctx.lineWidth=3;
         ctx.stroke();
 
-        // Second hand
+        // Second
         ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.strokeStyle = "red";
-        ctx.lineTo(cx + radius * 0.9 * Math.cos((second * 6 - 90) * Math.PI/180),
-                   cy + radius * 0.9 * Math.sin((second * 6 - 90) * Math.PI/180));
+        ctx.moveTo(cx,cy);
+        ctx.lineTo(cx + radius*0.9*Math.cos((s*6-90)*Math.PI/180),
+                   cy + radius*0.9*Math.sin((s*6-90)*Math.PI/180));
+        ctx.strokeStyle="red";
+        ctx.lineWidth=2;
         ctx.stroke();
-        ctx.strokeStyle = "black";
       }
     }
-    setInterval(updateClock, 1000);
+    setInterval(updateClock,1000);
     updateClock();
 
-    // Weather (requires OpenWeatherMap API key)
-    async function loadWeather() {
-      const apiKey = "YOUR_API_KEY"; // get free at openweathermap.org
-      const city = "Montreal"; // change this or detect user location
-      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
-
+    // Weather with geolocation
+    async function loadWeather(){
+      const apiKey="YOUR_API_KEY";
       try {
-        const res = await fetch(url);
-        const data = await res.json();
-        document.getElementById("weatherData").textContent =
-          `${data.name}: ${data.main.temp}°C, ${data.weather[0].description}`;
+        navigator.geolocation.getCurrentPosition(async pos=>{
+          const lat=pos.coords.latitude;
+          const lon=pos.coords.longitude;
+          const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`);
+          const data = await res.json();
+          document.getElementById("weatherData").innerHTML =
+            `${data.name}: ${data.main.temp}°C, ${data.weather[0].description} <img src="http://openweathermap.org/img/wn/${data.weather[0].icon}.png">`;
+        });
       } catch {
-        document.getElementById("weatherData").textContent = "Weather unavailable.";
+        document.getElementById("weatherData").textContent="Weather unavailable.";
       }
     }
     loadWeather();
 
-    // Notes Widget
-    const notesArea = document.getElementById("notes");
-    notesArea.value = localStorage.getItem("notes") || "";
-    notesArea.addEventListener("input", () => {
-      localStorage.setItem("notes", notesArea.value);
-    });
+    // Notes
+    const notesArea=document.getElementById("notes");
+    notesArea.value=localStorage.getItem("notes")||"";
+    notesArea.addEventListener("input",()=>{localStorage.setItem("notes",notesArea.value);});
 
-    // To-do Widget
-    const taskInput = document.getElementById("newTask");
-    const taskList = document.getElementById("taskList");
-    let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+    // To-do
+    const taskInput=document.getElementById("newTask");
+    const taskList=document.getElementById("taskList");
+    let tasks=JSON.parse(localStorage.getItem("tasks")||"[]");
 
-    function renderTasks() {
-      taskList.innerHTML = "";
-      tasks.forEach((task, i) => {
-        const li = document.createElement("li");
-        const chk = document.createElement("input");
-        chk.type = "checkbox";
-        chk.checked = task.done;
-        chk.onchange = () => {
-          tasks[i].done = chk.checked;
-          localStorage.setItem("tasks", JSON.stringify(tasks));
-          renderTasks();
-        };
+    function renderTasks(){
+      taskList.innerHTML="";
+      tasks.forEach((task,i)=>{
+        const li=document.createElement("li");
+        const chk=document.createElement("input");
+        chk.type="checkbox";
+        chk.checked=task.done;
+        chk.onchange=()=>{tasks[i].done=chk.checked;localStorage.setItem("tasks",JSON.stringify(tasks));renderTasks();};
         li.appendChild(chk);
         li.appendChild(document.createTextNode(" " + task.text));
         taskList.appendChild(li);
       });
     }
-    taskInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter" && taskInput.value.trim() !== "") {
-        tasks.push({ text: taskInput.value.trim(), done: false });
-        localStorage.setItem("tasks", JSON.stringify(tasks));
-        taskInput.value = "";
+    taskInput.addEventListener("keypress",(e)=>{
+      if(e.key==="Enter" && taskInput.value.trim()!==""){
+        tasks.push({text:taskInput.value.trim(),done:false});
+        localStorage.setItem("tasks",JSON.stringify(tasks));
+        taskInput.value="";
         renderTasks();
       }
     });
     renderTasks();
 
-    // Fullscreen mode
-    function toggleFullscreen(btn) {
-      const widget = btn.parentElement;
-      const widgets = document.querySelectorAll(".widget");
-
-      if (!widget.classList.contains("fullscreen")) {
-        widgets.forEach(w => { if (w !== widget) w.classList.add("hidden"); });
+    // Fullscreen
+    function toggleFullscreen(btn){
+      const widget=btn.parentElement;
+      const widgets=document.querySelectorAll(".widget");
+      if(!widget.classList.contains("fullscreen")){
+        widgets.forEach(w=>{if(w!==widget) w.classList.add("hidden");});
         widget.classList.add("fullscreen");
-      } else {
-        widgets.forEach(w => w.classList.remove("hidden"));
+      }else{
+        widgets.forEach(w=>w.classList.remove("hidden"));
         widget.classList.remove("fullscreen");
       }
     }
 
-    // Dragging
-    const widgets = document.querySelectorAll(".widget");
-    let dragItem = null, offsetX, offsetY;
-
-    widgets.forEach(widget => {
-      widget.addEventListener("mousedown", (e) => {
-        if (widget.classList.contains("fullscreen")) return;
-        dragItem = widget;
-        offsetX = e.clientX - widget.offsetLeft;
-        offsetY = e.clientY - widget.offsetTop;
-        widget.style.position = "absolute";
-        widget.style.zIndex = 1000;
-      });
-
-      document.addEventListener("mousemove", (e) => {
-        if (dragItem && !dragItem.classList.contains("fullscreen")) {
-          dragItem.style.left = (e.clientX - offsetX) + "px";
-          dragItem.style.top = (e.clientY - offsetY) + "px";
-        }
-      });
-
-      document.addEventListener("mouseup", () => {
-        if (dragItem) dragItem = null;
+    // Drag
+    const widgets=document.querySelectorAll(".widget");
+    let dragItem=null, offsetX, offsetY;
+    widgets.forEach(widget=>{
+      widget.addEventListener("mousedown", e=>{
+        if(widget.classList.contains("fullscreen")) return;
+        dragItem=widget;
+        offsetX=e.clientX-widget.offsetLeft;
+        offsetY=e.clientY-widget.offsetTop;
+        widget.style.position="absolute";
+        widget.style.zIndex=1000;
       });
     });
+
+    document.addEventListener("mousemove",e=>{
+      if(dragItem && !dragItem.classList.contains("fullscreen")){
+        dragItem.style.left=(e.clientX-offsetX)+"px";
+        dragItem.style.top=(e.clientY-offsetY)+"px";
+      }
+    });
+
+    document.addEventListener("mouseup",()=>{dragItem=null;});
   </script>
 </body>
 </html>
