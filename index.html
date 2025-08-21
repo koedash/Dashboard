@@ -27,17 +27,26 @@
       background: #1f1f1f;
       border-radius: 12px;
       padding: 20px;
-      width: 220px;
-      height: 140px;
+      width: 250px;
+      height: 180px;
       cursor: grab;
       position: relative;
       transition: transform 0.3s, background 0.3s;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
     }
 
     body.light .widget {
       background: #fff;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .widget h2 {
+      margin: 0 0 10px;
     }
 
     .widget:active {
@@ -87,6 +96,7 @@
       border-radius: 8px;
       cursor: pointer;
       z-index: 1100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
     body.light .settings-btn {
@@ -103,11 +113,18 @@
       color: white;
       border-radius: 12px;
       padding: 20px;
-      width: 220px;
+      width: 240px;
       display: none;
       flex-direction: column;
       gap: 12px;
       z-index: 1200;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     body.light .settings-panel {
@@ -119,10 +136,29 @@
       font-size: 14px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
 
     select, input[type="checkbox"] {
       margin-left: 10px;
+    }
+
+    textarea {
+      width: 90%;
+      height: 100px;
+      border-radius: 8px;
+      border: none;
+      padding: 8px;
+      resize: none;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    ul li {
+      text-align: left;
     }
   </style>
 </head>
@@ -134,7 +170,7 @@
   <div class="settings-panel" id="settingsPanel">
     <label>
       Dark Mode
-      <input type="checkbox" id="darkModeToggle">
+      <input type="checkbox" id="darkModeToggle" checked>
     </label>
     <label>
       Time Format
@@ -160,10 +196,25 @@
     <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
   </div>
 
-  <!-- Weather Widget placeholder -->
+  <!-- Weather Widget -->
   <div class="widget" id="weatherWidget">
     <h2>Weather</h2>
-    <p>Coming soon...</p>
+    <p id="weatherData">Loading...</p>
+    <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
+  </div>
+
+  <!-- Notes Widget -->
+  <div class="widget" id="notesWidget">
+    <h2>Notes</h2>
+    <textarea id="notes"></textarea>
+    <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
+  </div>
+
+  <!-- To-do Widget -->
+  <div class="widget" id="todoWidget">
+    <h2>To-Do</h2>
+    <input type="text" id="newTask" placeholder="New task...">
+    <ul id="taskList"></ul>
     <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
   </div>
 
@@ -220,7 +271,7 @@
 
         const radius = 40;
         const cx = analog.width / 2;
-        const cy = analog.height / 2;
+        const cy = analog.height / 2 + 20;
 
         // Clock face
         ctx.beginPath();
@@ -258,6 +309,62 @@
     }
     setInterval(updateClock, 1000);
     updateClock();
+
+    // Weather (requires OpenWeatherMap API key)
+    async function loadWeather() {
+      const apiKey = "YOUR_API_KEY"; // get free at openweathermap.org
+      const city = "Montreal"; // change this or detect user location
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        document.getElementById("weatherData").textContent =
+          `${data.name}: ${data.main.temp}°C, ${data.weather[0].description}`;
+      } catch {
+        document.getElementById("weatherData").textContent = "Weather unavailable.";
+      }
+    }
+    loadWeather();
+
+    // Notes Widget
+    const notesArea = document.getElementById("notes");
+    notesArea.value = localStorage.getItem("notes") || "";
+    notesArea.addEventListener("input", () => {
+      localStorage.setItem("notes", notesArea.value);
+    });
+
+    // To-do Widget
+    const taskInput = document.getElementById("newTask");
+    const taskList = document.getElementById("taskList");
+    let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+
+    function renderTasks() {
+      taskList.innerHTML = "";
+      tasks.forEach((task, i) => {
+        const li = document.createElement("li");
+        const chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.checked = task.done;
+        chk.onchange = () => {
+          tasks[i].done = chk.checked;
+          localStorage.setItem("tasks", JSON.stringify(tasks));
+          renderTasks();
+        };
+        li.appendChild(chk);
+        li.appendChild(document.createTextNode(" " + task.text));
+        taskList.appendChild(li);
+      });
+    }
+    taskInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" && taskInput.value.trim() !== "") {
+        tasks.push({ text: taskInput.value.trim(), done: false });
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        taskInput.value = "";
+        renderTasks();
+      }
+    });
+    renderTasks();
 
     // Fullscreen mode
     function toggleFullscreen(btn) {
