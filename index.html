@@ -1,427 +1,256 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Fancy Dashboard</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #121212;
-      color: white;
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      padding: 20px;
-      transition: background 0.3s, color 0.3s;
-      overflow: hidden;
-    }
+<meta charset="UTF-8">
+<title>Dashboard</title>
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #121212;
+  color: white;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px;
+  transition: background 0.3s, color 0.3s;
+  overflow: hidden;
+}
+body.light { background: #f0f0f0; color: black; }
 
-    body.light {
-      background: #f0f0f0;
-      color: black;
-    }
+/* Glassy Widget */
+.widget {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  padding: 20px;
+  width: 250px;
+  height: 220px;
+  cursor: grab;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.widget:hover { transform: translateY(-5px); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
+body.light .widget { background: rgba(255,255,255,0.3); border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+.widget h2 { margin: 0 0 10px; }
 
-    .widget {
-      background: rgba(255,255,255,0.05);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-      padding: 20px;
-      width: 250px;
-      height: 200px;
-      cursor: grab;
-      position: relative;
-      transition: transform 0.3s, box-shadow 0.3s;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-    }
+/* Fullscreen */
+.fullscreen-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: #333;
+  border: none;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.fullscreen-btn:hover { background: #555; }
+.widget.fullscreen {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  height: 70%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background: inherit;
+}
+.hidden { display: none; }
 
-    .widget:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
-    }
+/* Settings */
+.settings-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #1f1f1f;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 1100;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+body.light .settings-btn { background: #ddd; color: black; }
+.settings-panel {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  background: #1f1f1f;
+  color: white;
+  border-radius: 12px;
+  padding: 20px;
+  width: 240px;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1200;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from {opacity:0; transform:translateY(-10px);} to {opacity:1; transform:translateY(0);} }
+body.light .settings-panel { background: #fff; color: black; }
+.settings-panel label { font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
 
-    body.light .widget {
-      background: rgba(255,255,255,0.3);
-      border: 1px solid rgba(0,0,0,0.1);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    }
+/* Custom inputs/buttons */
+.custom-input, .custom-textarea, .custom-button {
+  border-radius: 8px;
+  border: none;
+  padding: 6px 10px;
+  outline: none;
+  font-size: 14px;
+}
+.custom-input, .custom-textarea { width: 90%; background: rgba(255,255,255,0.1); color: white; }
+body.light .custom-input, body.light .custom-textarea { background: rgba(0,0,0,0.05); color: black; }
+.custom-button { background: #555; color: white; cursor: pointer; margin-top: 5px; }
+.custom-button:hover { background: #777; }
 
-    .widget h2 {
-      margin: 0 0 10px;
-    }
+/* List */
+ul { list-style:none; padding:0; width:100%; text-align:left; max-height:100px; overflow-y:auto; }
+ul li { display:flex; justify-content:space-between; align-items:center; padding:4px 0; }
 
-    .widget:active {
-      cursor: grabbing;
-    }
-
-    .fullscreen-btn {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
-      background: #333;
-      border: none;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    .fullscreen-btn:hover {
-      background: #555;
-    }
-
-    .widget.fullscreen {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      width: 80%;
-      height: 70%;
-      transform: translate(-50%, -50%);
-      z-index: 1000;
-      background: inherit;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    /* Settings button */
-    .settings-btn {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #1f1f1f;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 8px;
-      cursor: pointer;
-      z-index: 1100;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    body.light .settings-btn {
-      background: #ddd;
-      color: black;
-    }
-
-    /* Settings panel */
-    .settings-panel {
-      position: fixed;
-      top: 70px;
-      right: 20px;
-      background: #1f1f1f;
-      color: white;
-      border-radius: 12px;
-      padding: 20px;
-      width: 240px;
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      z-index: 1200;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    body.light .settings-panel {
-      background: #fff;
-      color: black;
-    }
-
-    .settings-panel label {
-      font-size: 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    select, input[type="checkbox"] {
-      margin-left: 10px;
-    }
-
-    textarea {
-      width: 90%;
-      height: 100px;
-      border-radius: 8px;
-      border: none;
-      padding: 8px;
-      resize: none;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      width: 100%;
-      text-align: left;
-      max-height: 100px;
-      overflow-y: auto;
-    }
-
-    ul li {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 4px 0;
-    }
-
-    #clockDisplay, #analogClock {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 24px;
-      width: 100%;
-      height: 100%;
-    }
-  </style>
+/* Clock & canvas */
+#clockDisplay, #analogClock { display:flex; justify-content:center; align-items:center; font-size:24px; width:100%; height:100%; }
+</style>
 </head>
 <body>
-  <button class="settings-btn" onclick="toggleSettings()">⚙ Settings</button>
-  <div class="settings-panel" id="settingsPanel">
-    <label>
-      Dark Mode
-      <input type="checkbox" id="darkModeToggle" checked>
-    </label>
-    <label>
-      Time Format
-      <select id="timeFormat">
-        <option value="24">24h</option>
-        <option value="12">12h</option>
-      </select>
-    </label>
-    <label>
-      Clock Style
-      <select id="clockStyle">
-        <option value="digital">Digital</option>
-        <option value="analog">Analog</option>
-      </select>
-    </label>
-  </div>
+<button class="settings-btn" onclick="toggleSettings()">⚙ Settings</button>
+<div class="settings-panel" id="settingsPanel">
+  <label>Dark Mode<input type="checkbox" id="darkModeToggle" checked></label>
+  <label>Time Format<select id="timeFormat"><option value="24">24h</option><option value="12">12h</option></select></label>
+  <label>Clock Style<select id="clockStyle"><option value="digital">Digital</option><option value="analog">Analog</option></select></label>
+</div>
 
-  <!-- Clock Widget -->
-  <div class="widget" id="clockWidget">
-    <h2>Clock</h2>
-    <div id="clockDisplay"></div>
-    <canvas id="analogClock" width="180" height="180" style="display:none;"></canvas>
-    <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
-  </div>
+<!-- Clock Widget -->
+<div class="widget" id="clockWidget">
+  <h2>Clock</h2>
+  <div id="clockDisplay"></div>
+  <canvas id="analogClock" width="200" height="200" style="display:none;"></canvas>
+  <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
+</div>
 
-  <!-- Weather Widget -->
-  <div class="widget" id="weatherWidget">
-    <h2>Weather</h2>
-    <p id="weatherData">Loading...</p>
-    <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
-  </div>
+<!-- Weather Widget -->
+<div class="widget" id="weatherWidget">
+  <h2>Weather</h2>
+  <p id="weatherData">Loading...</p>
+  <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
+</div>
 
-  <!-- Notes Widget -->
-  <div class="widget" id="notesWidget">
-    <h2>Notes</h2>
-    <textarea id="notes"></textarea>
-    <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
-  </div>
+<!-- Notes Widget -->
+<div class="widget" id="notesWidget">
+  <h2>Notes</h2>
+  <textarea id="notes" class="custom-textarea"></textarea>
+  <button class="custom-button" onclick="clearNotes()">Clear Notes</button>
+  <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
+</div>
 
-  <!-- To-do Widget -->
-  <div class="widget" id="todoWidget">
-    <h2>To-Do</h2>
-    <input type="text" id="newTask" placeholder="New task...">
-    <ul id="taskList"></ul>
-    <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
-  </div>
+<!-- To-do Widget -->
+<div class="widget" id="todoWidget">
+  <h2>To-Do</h2>
+  <input type="text" id="newTask" class="custom-input" placeholder="New task...">
+  <ul id="taskList"></ul>
+  <button class="fullscreen-btn" onclick="toggleFullscreen(this)">⛶</button>
+</div>
 
-  <script>
-    let timeFormat = "24";
-    let clockStyle = "digital";
+<script>
+let timeFormat="24", clockStyle="digital";
 
-    // Dark mode on load
-    const darkModeToggle = document.getElementById("darkModeToggle");
-    document.body.classList.toggle("light", !darkModeToggle.checked);
+// Dark mode on load
+const darkModeToggle = document.getElementById("darkModeToggle");
+document.body.classList.toggle("light", !darkModeToggle.checked);
 
-    // Settings
-    function toggleSettings() {
-      const panel = document.getElementById("settingsPanel");
-      panel.style.display = panel.style.display === "flex" ? "none" : "flex";
-    }
+// Settings
+function toggleSettings(){document.getElementById("settingsPanel").style.display = document.getElementById("settingsPanel").style.display==="flex"?"none":"flex";}
+darkModeToggle.addEventListener("change",(e)=>{document.body.classList.toggle("light",!e.target.checked);});
+document.getElementById("timeFormat").addEventListener("change",(e)=>{timeFormat=e.target.value;});
+document.getElementById("clockStyle").addEventListener("change",(e)=>{clockStyle=e.target.value;});
 
-    darkModeToggle.addEventListener("change", (e) => {
-      document.body.classList.toggle("light", !e.target.checked);
+// Clock
+function updateClock(){
+  const now = new Date();
+  const digital=document.getElementById("clockDisplay");
+  const analog=document.getElementById("analogClock");
+  if(clockStyle==="digital"){analog.style.display="none"; digital.style.display="flex";
+    let h=now.getHours(),m=now.getMinutes().toString().padStart(2,"0"),s=now.getSeconds().toString().padStart(2,"0");
+    if(timeFormat==="12"){const ampm=h>=12?"PM":"AM"; h=h%12||12; digital.textContent=`${h}:${m}:${s} ${ampm}`;} else {digital.textContent=`${h.toString().padStart(2,"0")}:${m}:${s}`;}
+  } else {
+    digital.style.display="none"; analog.style.display="block";
+    const ctx=analog.getContext("2d"); ctx.clearRect(0,0,analog.width,analog.height);
+    const radius=80, cx=analog.width/2, cy=analog.height/2;
+    ctx.beginPath(); ctx.arc(cx,cy,radius,0,2*Math.PI);
+    ctx.strokeStyle=darkModeToggle.checked?"white":"black"; ctx.lineWidth=3; ctx.stroke();
+    let h=now.getHours()%12, m=now.getMinutes(), s=now.getSeconds();
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+radius*0.5*Math.cos((h*30+m/2-90)*Math.PI/180), cy+radius*0.5*Math.sin((h*30+m/2-90)*Math.PI/180)); ctx.strokeStyle=darkModeToggle.checked?"white":"black"; ctx.lineWidth=4; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+radius*0.8*Math.cos((m*6-90)*Math.PI/180), cy+radius*0.8*Math.sin((m*6-90)*Math.PI/180)); ctx.lineWidth=3; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+radius*0.9*Math.cos((s*6-90)*Math.PI/180), cy+radius*0.9*Math.sin((s*6-90)*Math.PI/180)); ctx.strokeStyle="red"; ctx.lineWidth=2; ctx.stroke();
+  }
+}
+setInterval(updateClock,1000); updateClock();
+
+// Weather
+async function loadWeather(){
+  const apiKey="YOUR_API_KEY";
+  try {
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const lat=pos.coords.latitude, lon=pos.coords.longitude;
+      const res=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`);
+      const data=await res.json();
+      document.getElementById("weatherData").innerHTML=`${data.name}: ${data.main.temp}°C, ${data.weather[0].description} <img src="http://openweathermap.org/img/wn/${data.weather[0].icon}.png">`;
     });
+  } catch {document.getElementById("weatherData").textContent="Weather unavailable.";}
+}
+loadWeather();
 
-    document.getElementById("timeFormat").addEventListener("change", (e) => {
-      timeFormat = e.target.value;
-    });
+// Notes
+const notesArea=document.getElementById("notes");
+notesArea.value=localStorage.getItem("notes")||"";
+notesArea.addEventListener("input",()=>{localStorage.setItem("notes",notesArea.value);});
+function clearNotes(){notesArea.value=""; localStorage.setItem("notes","");}
 
-    document.getElementById("clockStyle").addEventListener("change", (e) => {
-      clockStyle = e.target.value;
-    });
+// To-do
+const taskInput=document.getElementById("newTask");
+const taskList=document.getElementById("taskList");
+let tasks=JSON.parse(localStorage.getItem("tasks")||"[]");
 
-    // Clock
-    function updateClock() {
-      const now = new Date();
-      const digital = document.getElementById("clockDisplay");
-      const analog = document.getElementById("analogClock");
+function renderTasks(){
+  taskList.innerHTML="";
+  tasks.forEach((task,i)=>{
+    const li=document.createElement("li");
+    const span=document.createElement("span"); span.textContent=task.text;
+    const delBtn=document.createElement("button"); delBtn.textContent="🗑"; delBtn.className="custom-button"; delBtn.onclick=()=>{tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks();};
+    const chk=document.createElement("input"); chk.type="checkbox"; chk.checked=task.done; chk.onchange=()=>{tasks[i].done=chk.checked; localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks();};
+    li.appendChild(chk); li.appendChild(span); li.appendChild(delBtn); taskList.appendChild(li);
+  });
+}
+taskInput.addEventListener("keypress",(e)=>{if(e.key==="Enter"&&taskInput.value.trim()!==""){tasks.push({text:taskInput.value.trim(),done:false}); localStorage.setItem("tasks",JSON.stringify(tasks)); taskInput.value=""; renderTasks();}});
+renderTasks();
 
-      if(clockStyle === "digital") {
-        analog.style.display = "none";
-        digital.style.display = "flex";
-        let h = now.getHours();
-        let m = now.getMinutes().toString().padStart(2,"0");
-        let s = now.getSeconds().toString().padStart(2,"0");
-        if(timeFormat==="12") {
-          const ampm = h>=12?"PM":"AM";
-          h = h%12||12;
-          digital.textContent = `${h}:${m}:${s} ${ampm}`;
-        } else {
-          digital.textContent = `${h.toString().padStart(2,"0")}:${m}:${s}`;
-        }
-      } else {
-        digital.style.display="none";
-        analog.style.display="block";
-        const ctx = analog.getContext("2d");
-        ctx.clearRect(0,0,analog.width,analog.height);
+// Fullscreen
+function toggleFullscreen(btn){
+  const widget=btn.parentElement;
+  const widgets=document.querySelectorAll(".widget");
+  if(!widget.classList.contains("fullscreen")){widgets.forEach(w=>{if(w!==widget) w.classList.add("hidden");}); widget.classList.add("fullscreen");}
+  else{widgets.forEach(w=>w.classList.remove("hidden")); widget.classList.remove("fullscreen");}
+}
 
-        const radius = 80;
-        const cx = analog.width/2;
-        const cy = analog.height/2;
-
-        // Face
-        ctx.beginPath();
-        ctx.arc(cx,cy,radius,0,2*Math.PI);
-        ctx.strokeStyle = darkModeToggle.checked ? "white":"black";
-        ctx.lineWidth=3;
-        ctx.stroke();
-
-        let h = now.getHours()%12;
-        let m = now.getMinutes();
-        let s = now.getSeconds();
-
-        // Hour
-        ctx.beginPath();
-        ctx.moveTo(cx,cy);
-        ctx.lineTo(cx + radius*0.5*Math.cos((h*30+m/2-90)*Math.PI/180),
-                   cy + radius*0.5*Math.sin((h*30+m/2-90)*Math.PI/180));
-        ctx.strokeStyle = darkModeToggle.checked ? "white":"black";
-        ctx.lineWidth=4;
-        ctx.stroke();
-
-        // Minute
-        ctx.beginPath();
-        ctx.moveTo(cx,cy);
-        ctx.lineTo(cx + radius*0.8*Math.cos((m*6-90)*Math.PI/180),
-                   cy + radius*0.8*Math.sin((m*6-90)*Math.PI/180));
-        ctx.lineWidth=3;
-        ctx.stroke();
-
-        // Second
-        ctx.beginPath();
-        ctx.moveTo(cx,cy);
-        ctx.lineTo(cx + radius*0.9*Math.cos((s*6-90)*Math.PI/180),
-                   cy + radius*0.9*Math.sin((s*6-90)*Math.PI/180));
-        ctx.strokeStyle="red";
-        ctx.lineWidth=2;
-        ctx.stroke();
-      }
-    }
-    setInterval(updateClock,1000);
-    updateClock();
-
-    // Weather with geolocation
-    async function loadWeather(){
-      const apiKey="YOUR_API_KEY";
-      try {
-        navigator.geolocation.getCurrentPosition(async pos=>{
-          const lat=pos.coords.latitude;
-          const lon=pos.coords.longitude;
-          const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`);
-          const data = await res.json();
-          document.getElementById("weatherData").innerHTML =
-            `${data.name}: ${data.main.temp}°C, ${data.weather[0].description} <img src="http://openweathermap.org/img/wn/${data.weather[0].icon}.png">`;
-        });
-      } catch {
-        document.getElementById("weatherData").textContent="Weather unavailable.";
-      }
-    }
-    loadWeather();
-
-    // Notes
-    const notesArea=document.getElementById("notes");
-    notesArea.value=localStorage.getItem("notes")||"";
-    notesArea.addEventListener("input",()=>{localStorage.setItem("notes",notesArea.value);});
-
-    // To-do
-    const taskInput=document.getElementById("newTask");
-    const taskList=document.getElementById("taskList");
-    let tasks=JSON.parse(localStorage.getItem("tasks")||"[]");
-
-    function renderTasks(){
-      taskList.innerHTML="";
-      tasks.forEach((task,i)=>{
-        const li=document.createElement("li");
-        const chk=document.createElement("input");
-        chk.type="checkbox";
-        chk.checked=task.done;
-        chk.onchange=()=>{tasks[i].done=chk.checked;localStorage.setItem("tasks",JSON.stringify(tasks));renderTasks();};
-        li.appendChild(chk);
-        li.appendChild(document.createTextNode(" " + task.text));
-        taskList.appendChild(li);
-      });
-    }
-    taskInput.addEventListener("keypress",(e)=>{
-      if(e.key==="Enter" && taskInput.value.trim()!==""){
-        tasks.push({text:taskInput.value.trim(),done:false});
-        localStorage.setItem("tasks",JSON.stringify(tasks));
-        taskInput.value="";
-        renderTasks();
-      }
-    });
-    renderTasks();
-
-    // Fullscreen
-    function toggleFullscreen(btn){
-      const widget=btn.parentElement;
-      const widgets=document.querySelectorAll(".widget");
-      if(!widget.classList.contains("fullscreen")){
-        widgets.forEach(w=>{if(w!==widget) w.classList.add("hidden");});
-        widget.classList.add("fullscreen");
-      }else{
-        widgets.forEach(w=>w.classList.remove("hidden"));
-        widget.classList.remove("fullscreen");
-      }
-    }
-
-    // Drag
-    const widgets=document.querySelectorAll(".widget");
-    let dragItem=null, offsetX, offsetY;
-    widgets.forEach(widget=>{
-      widget.addEventListener("mousedown", e=>{
-        if(widget.classList.contains("fullscreen")) return;
-        dragItem=widget;
-        offsetX=e.clientX-widget.offsetLeft;
-        offsetY=e.clientY-widget.offsetTop;
-        widget.style.position="absolute";
-        widget.style.zIndex=1000;
-      });
-    });
-
-    document.addEventListener("mousemove",e=>{
-      if(dragItem && !dragItem.classList.contains("fullscreen")){
-        dragItem.style.left=(e.clientX-offsetX)+"px";
-        dragItem.style.top=(e.clientY-offsetY)+"px";
-      }
-    });
-
-    document.addEventListener("mouseup",()=>{dragItem=null;});
-  </script>
+// Drag
+widgets=document.querySelectorAll(".widget");
+let dragItem=null, offsetX, offsetY;
+widgets.forEach(widget=>{
+  widget.addEventListener("mousedown", e=>{if(widget.classList.contains("fullscreen")) return; dragItem=widget; offsetX=e.clientX-widget.offsetLeft; offsetY=e.clientY-widget.offsetTop; widget.style.position="absolute"; widget.style.zIndex=1000;});
+});
+document.addEventListener("mousemove",e=>{if(dragItem&&!dragItem.classList.contains("fullscreen")){dragItem.style.left=(e.clientX-offsetX)+"px"; dragItem.style.top=(e.clientY-offsetY)+"px";}});
+document.addEventListener("mouseup",()=>{dragItem=null;});
+</script>
 </body>
 </html>
